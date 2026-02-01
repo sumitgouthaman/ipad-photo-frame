@@ -15,19 +15,9 @@ struct BrowseView: View {
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(Array(photoManager.photos.enumerated()), id: \.element) { index, url in
                         NavigationLink(destination: PhotoDetailView(selectedIndex: index)) {
-                            AsyncImage(url: url) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 100, height: 100)
-                                    .clipped()
-                                    .cornerRadius(8)
-                            } placeholder: {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 100, height: 100)
-                                    .cornerRadius(8)
-                            }
+                            ThumbnailView(url: url, size: 100)
+                                .clipped()
+                                .cornerRadius(8)
                         }
                     }
                 }

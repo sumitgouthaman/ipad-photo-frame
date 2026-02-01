@@ -33,16 +33,16 @@ class PhotoManager: ObservableObject {
         }
     }
     
+    private var reloadWorkItem: DispatchWorkItem?
+    
     func savePhoto(data: Data, filename: String) {
         let uniqueName = "\(UUID().uuidString)_\(filename)"
         let fileURL = documentsDirectory.appendingPathComponent(uniqueName)
         do {
             try data.write(to: fileURL)
             print("Saved photo to \(fileURL.path)")
-            // Reload on main thread
-            DispatchQueue.main.async {
-                self.loadPhotos()
-            }
+            // Debounce reload
+            scheduleReload()
         } catch {
             print("Error saving photo: \(error)")
         }
@@ -51,12 +51,19 @@ class PhotoManager: ObservableObject {
     func deletePhoto(at url: URL) {
         do {
             try fileManager.removeItem(at: url)
-            DispatchQueue.main.async {
-                self.loadPhotos()
-            }
+            scheduleReload()
         } catch {
             print("Error deleting photo: \(error)")
         }
+    }
+    
+    private func scheduleReload() {
+        reloadWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            self?.loadPhotos()
+        }
+        reloadWorkItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: item)
     }
     
     func deleteAllPhotos() {

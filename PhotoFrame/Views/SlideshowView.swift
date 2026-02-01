@@ -97,9 +97,11 @@ struct SlideshowView: View {
             }
         }
         .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = true // Prevent sleep
             startSlideshow()
         }
         .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false // Allow sleep again
             stopSlideshow()
         }
         .onTapGesture {

@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var webServer = WebServerManager.shared
     @ObservedObject var photoManager = PhotoManager.shared
+    @ObservedObject var appLockManager = AppLockManager.shared
     
     @Environment(\.presentationMode) var presentationMode
     
@@ -14,6 +15,10 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
+                Section(header: Text("Security")) {
+                    Toggle("Require Touch ID / Face ID", isOn: $appLockManager.isAppLockEnabled)
+                }
+                
                 Section(header: Text("Web Server")) {
                     Toggle("Enable Web Server", isOn: Binding(
                         get: { webServer.isRunning },
