@@ -17,15 +17,22 @@ struct SlideshowView: View {
                 Color.black.edgesIgnoringSafeArea(.all)
                 
                 if !photoManager.photos.isEmpty {
-                    AsyncImage(url: photoManager.photos[currentIndex]) { image in
-                        image
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: geometry.size.width, height: geometry.size.height)
-                            .transition(.opacity)
-                            .id(currentIndex)
-                    } placeholder: {
-                        ProgressView()
+                    if photoManager.photos[currentIndex].pathExtension.lowercased() == "gif" {
+                         GIFView(url: photoManager.photos[currentIndex])
+                             .scaledToFit()
+                             .frame(width: geometry.size.width, height: geometry.size.height)
+                             .id(currentIndex)
+                    } else {
+                        AsyncImage(url: photoManager.photos[currentIndex]) { image in
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: geometry.size.width, height: geometry.size.height)
+                                .transition(.opacity)
+                                .id(currentIndex)
+                        } placeholder: {
+                            ProgressView()
+                        }
                     }
                 } else {
                     Text("No photos available")

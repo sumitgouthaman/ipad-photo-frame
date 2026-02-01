@@ -22,7 +22,7 @@ class PhotoManager: ObservableObject {
     func loadPhotos() {
         do {
             let files = try fileManager.contentsOfDirectory(at: documentsDirectory, includingPropertiesForKeys: nil)
-            let imageExtensions = ["jpg", "jpeg", "png", "heic"]
+            let imageExtensions = ["jpg", "jpeg", "png", "heic", "gif", "webp"]
             photos = files.filter { url in
                 imageExtensions.contains(url.pathExtension.lowercased())
             }.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })

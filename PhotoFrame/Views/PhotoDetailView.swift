@@ -12,13 +12,19 @@ struct PhotoDetailView: View {
                     ZStack {
                         Color.black.edgesIgnoringSafeArea(.all)
                         
-                        AsyncImage(url: photoManager.photos[index]) { image in
-                            image
-                                .resizable()
+                        if photoManager.photos[index].pathExtension.lowercased() == "gif" {
+                            GIFView(url: photoManager.photos[index])
                                 .scaledToFit()
                                 .frame(width: geometry.size.width, height: geometry.size.height)
-                        } placeholder: {
-                            ProgressView()
+                        } else {
+                            AsyncImage(url: photoManager.photos[index]) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: geometry.size.width, height: geometry.size.height)
+                            } placeholder: {
+                                ProgressView()
+                            }
                         }
                     }
                 }
