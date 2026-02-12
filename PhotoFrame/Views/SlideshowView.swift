@@ -125,7 +125,22 @@ struct SlideshowView: View {
             currentIndex = Int.random(in: 0..<photoManager.photos.count)
         }
         
-        timer = Timer.scheduledTimer(withTimeInterval: duration, repeats: true) { _ in
+        scheduleNextAdvance()
+    }
+    
+    /// Schedules the next slide advance using a one-shot timer.
+    /// For GIFs, waits at least one full loop duration before advancing.
+    func scheduleNextAdvance() {
+        let currentURL = photoManager.photos[currentIndex]
+        var interval = duration // default slideshow duration
+        
+        if currentURL.pathExtension.lowercased() == "gif",
+           let gifLen = gifDuration(for: currentURL) {
+            // Use the longer of: one full GIF loop or the slideshow duration
+            interval = max(gifLen, duration)
+        }
+        
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { _ in
             withAnimation(.easeInOut(duration: 1.0)) {
                 advanceSlide()
             }
@@ -150,22 +165,22 @@ struct SlideshowView: View {
             currentIndex = (currentIndex + 1) % photoManager.photos.count
         }
         
-        // Reset timer on manual interaction
+        // Schedule next advance (resets timer)
         stopSlideshow()
-        startSlideshow()
+        scheduleNextAdvance()
     }
     
     func previousSlide() {
         if photoManager.photos.isEmpty { return }
         
         if isRandom {
-            // Random doesn't have a deterministic "previous", so just pick another random or go back if we tracked history (simplifying to random for now)
+            // Random doesn't have a deterministic "previous", so just pick another random
             advanceSlide()
         } else {
             currentIndex = (currentIndex - 1 + photoManager.photos.count) % photoManager.photos.count
         }
         
         stopSlideshow()
-        startSlideshow()
+        scheduleNextAdvance()
     }
 }
