@@ -4,53 +4,109 @@ struct PhotoDetailView: View {
     @ObservedObject var photoManager = PhotoManager.shared
     @State var selectedIndex: Int
     @State private var showControls = false
-    
+
+    @Environment(\.presentationMode) var presentationMode
+
     var body: some View {
-        TabView(selection: $selectedIndex) {
-            ForEach(0..<photoManager.photos.count, id: \.self) { index in
-                GeometryReader { geometry in
-                    ZStack {
-                        Color.black.edgesIgnoringSafeArea(.all)
-                        
-                        if photoManager.photos[index].pathExtension.lowercased() == "gif" {
-                            GIFView(url: photoManager.photos[index])
+        GeometryReader { geometry in
+            ZStack {
+                Color.black.edgesIgnoringSafeArea(.all)
+
+                if !photoManager.photos.isEmpty {
+                    let url = photoManager.photos[selectedIndex]
+                    if url.pathExtension.lowercased() == "gif" {
+                        GIFView(url: url)
+                            .scaledToFit()
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .id(selectedIndex)
+                    } else {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
                                 .scaledToFit()
                                 .frame(width: geometry.size.width, height: geometry.size.height)
-                        } else {
-                            AsyncImage(url: photoManager.photos[index]) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: geometry.size.width, height: geometry.size.height)
-                            } placeholder: {
-                                ProgressView()
-                            }
+                                .transition(.opacity)
+                                .id(selectedIndex)
+                        } placeholder: {
+                            ProgressView()
                         }
                     }
                 }
-                .tag(index)
-                .ignoresSafeArea()
-            }
-        }
-        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-        .background(Color.black.edgesIgnoringSafeArea(.all))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+
+                // Overlay Controls (same style as SlideshowView)
                 if showControls {
-                    // Standard Back button handles exit, but we can add extra controls if needed
+                    VStack {
+                        HStack {
+                            // Back button (left side of top bar)
+                            Button(action: {
+                                presentationMode.wrappedValue.dismiss()
+                            }) {
+                                Image(systemName: "chevron.left.circle.fill")
+                                    .font(.system(size: 30))
+                                    .foregroundColor(.white)
+                                    .padding()
+                            }
+                            .padding(.top, 20)
+                            .padding(.leading, 20)
+
+                            Spacer()
+                        }
+
+                        Spacer()
+
+                        // Previous / Next arrows
+                        HStack {
+                            Button(action: { previousPhoto() }) {
+                                Image(systemName: "chevron.left.circle.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                            .padding()
+
+                            Spacer()
+
+                            Button(action: { nextPhoto() }) {
+                                Image(systemName: "chevron.right.circle.fill")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                            .padding()
+                        }
+                        .padding(.bottom, 20)
+                    }
                 }
             }
         }
-        // Toggle controls on tap
+        .edgesIgnoringSafeArea(.all)
+        .navigationBarHidden(true)
+        .statusBar(hidden: !showControls)
+        .background(Color.black)
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width < -50 {
+                        // Swipe Left -> Next
+                        withAnimation { nextPhoto() }
+                    } else if value.translation.width > 50 {
+                        // Swipe Right -> Previous
+                        withAnimation { previousPhoto() }
+                    }
+                }
+        )
         .onTapGesture {
             withAnimation {
                 showControls.toggle()
             }
         }
-        // Force hide/show bars based on state
-        .statusBar(hidden: !showControls)
-        .toolbar(showControls ? .visible : .hidden, for: .navigationBar)
-        .toolbar(showControls ? .visible : .hidden, for: .tabBar) // Requires iOS 16+
+    }
+
+    private func nextPhoto() {
+        guard !photoManager.photos.isEmpty else { return }
+        selectedIndex = (selectedIndex + 1) % photoManager.photos.count
+    }
+
+    private func previousPhoto() {
+        guard !photoManager.photos.isEmpty else { return }
+        selectedIndex = (selectedIndex - 1 + photoManager.photos.count) % photoManager.photos.count
     }
 }
