@@ -12,7 +12,7 @@ struct PhotoDetailView: View {
             ZStack {
                 Color.black.edgesIgnoringSafeArea(.all)
 
-                if !photoManager.photos.isEmpty {
+                if !photoManager.photos.isEmpty && selectedIndex < photoManager.photos.count {
                     let url = photoManager.photos[selectedIndex]
                     if url.pathExtension.lowercased() == "gif" {
                         GIFView(url: url)

@@ -18,15 +18,21 @@ class WebServerManager: ObservableObject {
             
             // Handle file upload
             server.POST["/upload"] = { request in
+                let allowedExtensions: Set<String> = ["jpg", "jpeg", "png", "gif", "webp", "heic", "bmp"]
                 let multipart = request.parseMultiPartFormData()
-                
+
                 for part in multipart {
                     if let filename = part.fileName {
+                        let ext = (filename as NSString).pathExtension.lowercased()
+                        guard allowedExtensions.contains(ext) else {
+                            print("Rejected upload with disallowed extension: \(ext)")
+                            continue
+                        }
                         let fileData = Data(part.body)
                         PhotoManager.shared.savePhoto(data: fileData, filename: filename)
                     }
                 }
-                
+
                 return .ok(.text("Upload Successful"))
             }
 
@@ -67,10 +73,12 @@ class WebServerManager: ObservableObject {
                 let addrFamily = interface?.ifa_addr.pointee.sa_family
                 
                 if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
-                    let name = String(cString: (interface?.ifa_name)!)
+                    guard let ifName = interface?.ifa_name else { continue }
+                    let name = String(cString: ifName)
                     if name == "en0" {
+                        guard let ifAddr = interface?.ifa_addr else { continue }
                         var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                        getnameinfo(interface?.ifa_addr, socklen_t((interface?.ifa_addr.pointee.sa_len)!), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST)
+                        getnameinfo(ifAddr, socklen_t(ifAddr.pointee.sa_len), &hostname, socklen_t(hostname.count), nil, socklen_t(0), NI_NUMERICHOST)
                         let address = String(cString: hostname)
                         if addrFamily == UInt8(AF_INET) {
                              addresses.append(address)
@@ -289,7 +297,14 @@ class WebServerManager: ObservableObject {
                     let li = document.createElement('li');
                     li.style.borderBottom = '1px solid #f0f0f0';
                     li.style.padding = '5px 0';
-                    li.innerHTML = `<strong>${filename}</strong>: <span style="color:${color}">${message}</span>`;
+                    let strong = document.createElement('strong');
+                    strong.textContent = filename;
+                    let span = document.createElement('span');
+                    span.style.color = color;
+                    span.textContent = message;
+                    li.appendChild(strong);
+                    li.appendChild(document.createTextNode(': '));
+                    li.appendChild(span);
                     log.appendChild(li);
                     return li;
                 }

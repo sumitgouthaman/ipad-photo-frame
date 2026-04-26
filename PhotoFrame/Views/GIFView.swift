@@ -15,14 +15,19 @@ struct GIFView: UIViewRepresentable {
         webView.scrollView.isScrollEnabled = false
         webView.scrollView.bounces = false
         
-        // Load the GIF
-        do {
-            let data = try Data(contentsOf: url)
-            webView.load(data, mimeType: "image/gif", characterEncodingName: "UTF-8", baseURL: url.deletingLastPathComponent())
-        } catch {
-            print("Error loading GIF data: \(error)")
+        // Load the GIF on a background thread to avoid blocking the main thread
+        let baseURL = url.deletingLastPathComponent()
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let data = try Data(contentsOf: url)
+                DispatchQueue.main.async {
+                    webView.load(data, mimeType: "image/gif", characterEncodingName: "UTF-8", baseURL: baseURL)
+                }
+            } catch {
+                print("Error loading GIF data: \(error)")
+            }
         }
-        
+
         return webView
     }
 

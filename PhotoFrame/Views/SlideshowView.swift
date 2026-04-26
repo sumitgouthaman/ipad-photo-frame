@@ -131,6 +131,12 @@ struct SlideshowView: View {
     /// Schedules the next slide advance using a one-shot timer.
     /// For GIFs, waits at least one full loop duration before advancing.
     func scheduleNextAdvance() {
+        guard currentIndex < photoManager.photos.count else {
+            currentIndex = 0
+            guard !photoManager.photos.isEmpty else { return }
+            scheduleNextAdvance()
+            return
+        }
         let currentURL = photoManager.photos[currentIndex]
         var interval = duration // default slideshow duration
 
@@ -186,7 +192,8 @@ struct SlideshowView: View {
         // Pop the current entry from history to go back
         if history.count > 1 {
             history.removeLast()
-            currentIndex = history.last!
+            guard let lastIndex = history.last else { return }
+            currentIndex = lastIndex
         } else if !isRandom {
             // Sequential mode: wrap backwards
             let newIndex = (currentIndex - 1 + photoManager.photos.count) % photoManager.photos.count

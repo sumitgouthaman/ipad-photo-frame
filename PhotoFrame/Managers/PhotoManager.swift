@@ -1,6 +1,4 @@
 import Foundation
-import Foundation
-import UIKit
 import Combine
 
 
@@ -95,7 +93,12 @@ class PhotoManager: ObservableObject {
     
     func deleteAllPhotos() {
         for photo in photos {
-            deletePhoto(at: photo)
+            do {
+                try fileManager.removeItem(at: photo)
+            } catch {
+                print("Error deleting photo: \(error)")
+            }
         }
+        scheduleReload()
     }
 }
